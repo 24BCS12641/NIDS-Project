@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from flask import Flask, render_template, request, redirect, send_file, session, jsonify
 from flask_bcrypt import Bcrypt
-from sniffer import latest_packet, capture_packet, get_packet_rate
+from sniffer import latest_packet_data, capture_packet, get_packet_rate
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from flask import send_file
@@ -208,7 +208,7 @@ def predict():
         capture_packet()
 
         # If no packet found
-        if not latest_packet:
+        if not latest_packet_data:
             return jsonify({
                 "protocol": "No Data",
                 "length": 0,
@@ -217,9 +217,9 @@ def predict():
             })
 
         # Get packet details safely
-        protocol = latest_packet.get("protocol", 6)
-        length = latest_packet.get("length", 0)
-        ip = latest_packet.get("src_ip", "Unknown")
+        protocol = latest_packet_data.get("protocol", 6)
+        length = latest_packet_data.get("length", 0)
+        ip = latest_packet_data.get("src_ip", "Unknown")
 
         # Convert protocol number to name
         protocol_map = {6: "TCP", 17: "UDP", 1: "ICMP"}
