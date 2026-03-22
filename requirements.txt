@@ -4,3 +4,4 @@ numpy
 pandas
 requests
 flask-bcrypt
+scapy
