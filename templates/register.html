@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cyber NIDS Register</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #000000, #001f1f, #000000);
+            background-size: 400% 400%;
+            animation: bgMove 10s ease infinite;
+        }
+
+        @keyframes bgMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .register-box {
+            background: rgba(0, 255, 255, 0.08);
+            border: 1px solid #00ffff;
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 0 25px #00ffff;
+            border-radius: 10px;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            text-shadow: 0 0 10px #00ffff;
+            color: #00ffff;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: black;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            outline: none;
+            font-family: Orbitron;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: black;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: Orbitron;
+        }
+
+        button:hover {
+            background: #00ffff;
+            color: black;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .link {
+            margin-top: 20px;
+            display: block;
+            color: #00ffff;
+            text-decoration: none;
+        }
+
+        .link:hover {
+            text-shadow: 0 0 10px #00ffff;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="register-box">
+    <h1>📝 Create NIDS Account</h1>
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+
+        <input type="password" name="password" placeholder="Password" required>
+
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+        <input type="email" name="email" placeholder="Email Address" required>
+        <button type="submit">Register</button>
+    </form>
+
+    <a href="/login" class="link">Already have an account? Login</a>
+</div>
+
+</body>
+</html>

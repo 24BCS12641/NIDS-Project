@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NIDS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   
+</div>
+</head>
+<body>
+
+<!-- Alert Sound -->
+<audio id="alertSound" src="/static/alert.mp3"></audio>
+
+<!-- Logout Modal -->
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h2>⚠ Confirm Logout</h2>
+        <p>Are you sure you want to exit the system?</p>
+        <div class="modal-buttons">
+            <button onclick="closeModal()" class="cancel-btn">Cancel</button>
+            <a href="/logout" class="confirm-btn">Logout</a>
+        </div>
+    </div>
+</div>
+
+
+<div class="header">
+
+    <div class="left-header">
+        <img src="/static/logo.png" class="logo">
+
+        <div>
+            <h1>Network Intrusion Detection System</h1>
+            <p>👤 Welcome, {{ username }}</p>
+        </div>
+    </div>
+
+    <button class="logout-btn" onclick="confirmLogout()">⏻ Logout</button>
+
+</div>
+<div style="display:flex; gap:20px; justify-content:center;">
+    <div class="cyber-card">
+        <h3>Total Intrusions</h3>
+        <p id="intrusionCount">0</p>
+    </div>
+    <div class="cyber-card">
+        <h3>Normal Traffic</h3>
+        <p id="normalCount">0</p>
+    </div>
+</div>
+<div style="display:flex; gap:20px; justify-content:center; margin-top:20px;">
+    
+    <div class="cyber-card">
+        <h3>🧠 Model Accuracy</h3>
+        <p id="accuracy">0%</p>
+    </div>
+
+    <div class="cyber-card">
+        <h3>📊 Confusion Matrix</h3>
+        <canvas id="cmChart" width="250" height="150"></canvas>
+    </div>
+
+</div>
+
+
+
+
+<button onclick="scan()">Scan Network</button>
+
+<div id="result"></div>
+
+<div class="cyber-card">
+    <h2>📡 Network Packet Rate</h2>
+    <div id="packetRate"></div>
+</div>
+
+<canvas id="chart" width="400" height="200"></canvas>
+<canvas id="pieChart" width="300" height="200"></canvas>
+
+<h2>Attack History</h2>
+
+<div id="console">
+    <h2>Live Traffic Console</h2>
+</div>
+
+<table border="1" width="80%" align="center" style="margin-top:20px;">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Protocol</th>
+            <th>Length</th>
+            <th>Result</th>
+            <th>Time</th>
+        </tr>
+    </thead>
+    <tbody id="logTable"></tbody>
+</table>
+<a href="/download_report">
+    <button>Download Report</button>
+</a>
+
+<script>
+
+function confirmLogout() {
+    document.getElementById("logoutModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("logoutModal").style.display = "none";
+}
+
+async function loadRate(){
+    const res = await fetch("/rate");
+    const data = await res.json();
+    document.getElementById("packetRate").innerHTML =
+        `⚡ ${data.rate} packets/sec`;
+        
+}
+async function loadModelInfo(){
+    const res = await fetch("/model_info");
+    const data = await res.json();
+
+    // Smooth animation
+    let current = parseFloat(document.getElementById("accuracy").innerText) || 0;
+    let target = data.accuracy;
+
+    let step = (target - current) / 20;
+
+    let interval = setInterval(() => {
+        current += step;
+        document.getElementById("accuracy").innerText =
+            current.toFixed(1) + "%";
+
+        if (Math.abs(current - target) < 0.5) {
+            document.getElementById("accuracy").innerText =
+                target + "%";
+            clearInterval(interval);
+        }
+    }, 50);
+
+    // Update confusion matrix
+    const cm = data.confusion_matrix;
+    cmChart.data.datasets[0].data = [
+        cm[0][0], cm[0][1], cm[1][0], cm[1][1]
+    ];
+    cmChart.update();
+}
+
+const cmCtx = document.getElementById('cmChart').getContext('2d');
+
+const cmChart = new Chart(cmCtx, {
+    type: 'bar',
+    data: {
+        labels: ['TN', 'FP', 'FN', 'TP'],
+        datasets: [{
+            label: 'Confusion Matrix',
+            data: [0, 0, 0, 0],
+            backgroundColor: ['green', 'red', 'orange', 'blue']
+        }]
+    }
+});
+
+function addConsoleLog(data){
+    const consoleDiv = document.getElementById("console");
+    const time = new Date().toLocaleTimeString();
+
+    let message = `[${time}] ${data.result}  Protocol:${data.protocol}  Length:${data.length}`;
+    const logLine = document.createElement("div");
+
+    if(data.result === "Intrusion"){
+        logLine.classList.add("console-alert");
+        message = `[${time}] 🚨 INTRUSION DETECTED! Protocol:${data.protocol} Length:${data.length}`;
+    }
+
+    logLine.textContent = message;
+    consoleDiv.appendChild(logLine);
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+}
+
+async function scan(){
+    const res = await fetch("/predict");
+    const data = await res.json();
+
+    if (data.result === "Intrusion") {
+        document.getElementById("alertSound").play();
+        document.getElementById("result").style.boxShadow = "0 0 30px red";
+
+        alert("🚨 Intrusion Detected!");
+
+        document.body.style.backgroundColor = "#2a0000";
+        setTimeout(() => {
+            document.body.style.backgroundColor = "#000";
+        }, 500);
+
+    } else {
+        document.getElementById("result").style.boxShadow = "0 0 15px #00ffff";
+    }
+
+    addConsoleLog(data);
+
+    // ✅ ADD THIS BLOCK (MISSING PART)
+    document.getElementById("result").innerHTML =
+        "<h2>" + data.result + "</h2>" +
+        "<p>Protocol: " + data.protocol + "</p>" +
+        "<p>Length: " + data.length + "</p>" +
+        "<p>IP: " + data.ip + "</p>";
+
+    loadStats();
+    loadLogs();
+}
+async function loadStats(){
+    const res = await fetch("/stats");
+    const data = await res.json();
+    const timeLabel = new Date().toLocaleTimeString();
+
+    chart.data.labels.push(timeLabel);
+    chart.data.datasets[0].data.push(data.normal);
+    chart.data.datasets[1].data.push(data.intrusion);
+
+    if(chart.data.labels.length > 10){
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+        chart.data.datasets[1].data.shift();
+    }
+
+    chart.update();
+    document.getElementById("intrusionCount").innerText = data.intrusions;
+    document.getElementById("normalCount").innerText = data.normal;
+
+    // ✅ Pie chart update
+    pieChart.data.datasets[0].data = [data.normal, data.intrusions];
+    pieChart.update();
+}
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+
+const pieChart = new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+        labels: ['Normal', 'Intrusions'],
+        datasets: [{
+            data: [0, 0],
+            backgroundColor: ['green', 'red']
+        }]
+    }
+});
+
+const ctx = document.getElementById('chart').getContext('2d');
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'Normal Traffic',
+                data: [],
+                borderColor: 'green',
+                backgroundColor: 'rgba(0,255,0,0.2)',
+                tension: 0.4
+            },
+            {
+                label: 'Intrusion Traffic',
+                data: [],
+                borderColor: 'red',
+                backgroundColor: 'rgba(255,0,0,0.2)',
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        animation: { duration: 800 },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+async function loadLogs(){
+    const res = await fetch("/logs");
+    const data = await res.json();
+
+    let table = document.getElementById("logTable");
+    table.innerHTML = "";
+
+    data.forEach(row => {
+        table.innerHTML += `
+            <tr>
+                <td>${row.id}</td>
+                <td>${row.protocol}</td>
+                <td>${row.length}</td>
+                <td>${row.result}</td>
+                <td>${row.time}</td>
+            </tr>
+        `;
+    });
+}
+
+/* 3D Card Effect */
+document.querySelectorAll(".cyber-card").forEach(card => {
+    card.addEventListener("mousemove", (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const rotateX = ((y / rect.height) - 0.5) * 10;
+        const rotateY = ((x / rect.width) - 0.5) * -10;
+
+        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+
+    card.addEventListener("mouseleave", () => {
+        card.style.transform = "rotateX(0deg) rotateY(0deg)";
+    });
+});
+function downloadReport(){
+    window.location.href = "/download_report";
+}
+
+/* Initial Load */
+loadLogs();
+loadStats();
+loadModelInfo();
+
+/* Auto Scan & Rate */
+setInterval(scan, 5000);
+setInterval(loadRate, 1000);
+setInterval(loadModelInfo, 3000);
+
+</script>
+
+</body>
+</html>
