@@ -204,11 +204,14 @@ def predict():
         return redirect("/login")
 
     try:
-        # Capture packet
+        # 🔥 Capture packet FIRST
         capture_packet()
 
+        # 🔥 GET DATA PROPERLY
+        packet = latest_packet_data()
+
         # If no packet found
-        if not latest_packet_data:
+        if not packet:
             return jsonify({
                 "protocol": "No Data",
                 "length": 0,
@@ -216,25 +219,27 @@ def predict():
                 "ip": "Unknown"
             })
 
-        # Get packet details safely
-        protocol = latest_packet_data.get("protocol", 6)
-        length = latest_packet_data.get("length", 0)
-        ip = latest_packet_data.get("src_ip", "Unknown")
+        # Extract values correctly
+        protocol = packet.get("protocol", "TCP")
+        length = packet.get("length", 0)
+        ip = packet.get("ip", "Unknown")
 
-        # Convert protocol number to name
+        # Convert protocol (if number)
         protocol_map = {6: "TCP", 17: "UDP", 1: "ICMP"}
-        protocol_name = protocol_map.get(protocol, "TCP")
+        if isinstance(protocol, int):
+            protocol_name = protocol_map.get(protocol, "TCP")
+        else:
+            protocol_name = protocol  # already string (dummy mode)
 
-        # Encode protocol (if using ML)
+        # Encode protocol
         encoded_protocol = protocol_mapping.get(protocol_name, 0)
 
-        # Create input data (for ML if needed)
+        # ML input
         input_data = pd.DataFrame([{
             "protocol": encoded_protocol,
             "length": length
         }])
 
-        # 🔥 RESULT LOGIC (ML + Demo)
         import random
 
         try:
@@ -242,7 +247,7 @@ def predict():
         except:
             prediction = 0
 
-        # Combine ML + random for demo
+        # Final result
         if prediction == 1 or random.random() < 0.3:
             result = "Intrusion"
         else:
@@ -257,7 +262,6 @@ def predict():
         conn.commit()
         conn.close()
 
-        # Return response
         return jsonify({
             "protocol": protocol_name,
             "length": length,
