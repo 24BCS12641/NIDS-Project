@@ -70,7 +70,7 @@ init_db()
 # ==============================
 def send_telegram_alert(protocol, length):
     BOT_TOKEN = os.getenv("8725387903:AAHvEvxdatjdSR09opzsZi67w9821dCW-4I")
-    CHAT_ID = os.getenv("6290047520")
+    CHAT_ID = os.getenv("8725387903")
 
     if not BOT_TOKEN or not CHAT_ID:
         return
