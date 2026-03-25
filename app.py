@@ -92,7 +92,7 @@ Time: {datetime.now()}
 # ==============================
 def send_email_alert(protocol, length):
     sender = os.getenv("singhchhotu1640@gmail.com")
-    password = os.getenv("cfyovfmeoitbooqy")
+    password = os.getenv("ijmauhcctbrrcjbk")
     receiver = os.getenv("singhchhotu1640@gmail.com")
     if not sender or not password:
         return
